@@ -4,7 +4,7 @@ SRC      = attacks.c bench.c berserk.c bits.c board.c eval.c history.c move.c mo
 		   search.c see.c tb.c thread.c transposition.c uci.c util.c zobrist.c nn/accumulator.c nn/evaluate.c pyrrhic/tbprobe.c
 CC       = clang
 VERSION  = 13
-MAIN_NETWORK = berserk-d43206fe90e4.nn
+MAIN_NETWORK = net26-240.bin
 EVALFILE = $(MAIN_NETWORK)
 DEFS     = -DVERSION=\"$(VERSION)\" -DEVALFILE=\"$(EVALFILE)\" -DNDEBUG
 

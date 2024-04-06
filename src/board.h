@@ -87,13 +87,10 @@ INLINE int MoveRequiresRefresh(int piece, int from, int to) {
 
   if ((from & 4) != (to & 4))
     return 1;
-  return KING_BUCKETS[from^56] != KING_BUCKETS[to^56];
+  return KING_BUCKETS[from] != KING_BUCKETS[to];
 }
 
 INLINE int FeatureIdx(int piece, int sq, int kingsq, const int view) {
-  sq ^= 56;
-  kingsq ^= 56;
-
   if (kingsq & 4) {
     kingsq ^= 7;
     sq ^= 7;
@@ -101,7 +98,7 @@ INLINE int FeatureIdx(int piece, int sq, int kingsq, const int view) {
 
   int oP  = 6 * ((piece ^ view) & 0x1) + PieceType(piece);
   int oK  = (56 * view) ^ kingsq;
-  int oSq = (56 * view) ^ sq;
+  int oSq = (56 * view) ^ sq ^ 56;
 
   return KING_BUCKETS[oK] * 12 * 64 + oP * 64 + oSq;
 }

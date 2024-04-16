@@ -55,7 +55,6 @@ Score Evaluate(Board* board, ThreadData* thread) {
   int score = Propagate(board);
 
   // scaled based on phase [1, 1.5]
-  score = (128 + board->phase) * score / 320;
   score += board->phase * thread->contempt[board->stm] / 64;
 
   return Min(EVAL_UNKNOWN - 1, Max(-EVAL_UNKNOWN + 1, score));

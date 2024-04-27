@@ -394,7 +394,6 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
     // hot exit
     longjmp(thread->exit, 1);
 
-  IncRlx(thread->nodes);
   if (isPV && thread->seldepth < ss->ply + 1)
     thread->seldepth = ss->ply + 1;
 
@@ -537,6 +536,7 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
       TTPrefetch(KeyAfter(board, NULL_MOVE));
       ss->move = NULL_MOVE;
       ss->ch   = &thread->ch[0][WHITE_PAWN][A1];
+      IncRlx(thread->nodes);
       MakeNullMove(board);
 
       score = -Negamax(-beta, -beta + 1, depth - R, !cutnode, thread, &childPv, ss + 1);
@@ -575,6 +575,7 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
         TTPrefetch(KeyAfter(board, move));
         ss->move = move;
         ss->ch   = &thread->ch[IsCap(move)][Moving(move)][To(move)];
+        IncRlx(thread->nodes);
         MakeMove(move, board);
 
         // qsearch to quickly check
@@ -696,6 +697,7 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
     TTPrefetch(KeyAfter(board, move));
     ss->move = move;
     ss->ch   = &thread->ch[IsCap(move)][Moving(move)][To(move)];
+    IncRlx(thread->nodes);
     MakeMove(move, board);
 
     // apply extensions
@@ -841,8 +843,6 @@ int Quiesce(int alpha, int beta, int depth, ThreadData* thread, SearchStack* ss)
     // hot exit
     longjmp(thread->exit, 1);
 
-  IncRlx(thread->nodes);
-
   // draw check
   if (IsDraw(board, ss->ply))
     return 0;
@@ -936,6 +936,7 @@ int Quiesce(int alpha, int beta, int depth, ThreadData* thread, SearchStack* ss)
     TTPrefetch(KeyAfter(board, move));
     ss->move = move;
     ss->ch   = &thread->ch[IsCap(move)][Moving(move)][To(move)];
+    IncRlx(thread->nodes);
     MakeMove(move, board);
 
     score = -Quiesce(-beta, -alpha, depth - 1, thread, ss + 1);

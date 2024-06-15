@@ -278,9 +278,9 @@ void Search(ThreadData* thread) {
 
         SortRootMoves(thread, thread->multiPV);
 
-        if (mainThread && (score <= alpha || score >= beta) && Limits.multiPV == 1 &&
-            GetTimeMS() - Limits.start >= 2500)
-          PrintUCI(thread, alpha, beta, board);
+      //  if (mainThread && (score <= alpha || score >= beta) && Limits.multiPV == 1 &&
+      //      GetTimeMS() - Limits.start >= 2500)
+      //    PrintUCI(thread, alpha, beta, board);
 
         if (score <= alpha) {
           // adjust beta downward when failing low
@@ -305,8 +305,8 @@ void Search(ThreadData* thread) {
       SortRootMoves(thread, 0);
 
       // Print if final multipv or time elapsed
-      if (mainThread && (thread->multiPV + 1 == Limits.multiPV || GetTimeMS() - Limits.start >= 2500))
-        PrintUCI(thread, -CHECKMATE, CHECKMATE, board);
+     // if (mainThread && (thread->multiPV + 1 == Limits.multiPV || GetTimeMS() - Limits.start >= 2500))
+      //  PrintUCI(thread, -CHECKMATE, CHECKMATE, board);
     }
 
     if (!mainThread)

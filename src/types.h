@@ -69,7 +69,6 @@ typedef struct {
   int fmr;
   int nullply;
   uint64_t zobrist;
-  uint64_t pawnZobrist;
   BitBoard checkers;
   BitBoard pinned;
   BitBoard threatened;

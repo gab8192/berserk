@@ -428,7 +428,7 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
 
   // if the TT has a value that fits our position and has been searched to an
   // equal or greater depth, then we accept this score and prune
-  if (!isPV && ttScore != UNKNOWN && ttDepth >= depth && (cutnode || ttScore <= alpha) &&
+  if (!isPV && ttScore != UNKNOWN && ttDepth >= depth &&
       (ttBound & (ttScore >= beta ? BOUND_LOWER : BOUND_UPPER)))
     return ttScore;
 
@@ -500,26 +500,17 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
   (ss + 1)->killers[1] = NULL_MOVE;
   ss->de               = (ss - 1)->de;
 
-  // IIR by Ed Schroder
-  // http://talkchess.com/forum3/viewtopic.php?f=7&t=74769&sid=64085e3396554f0fba414404445b3120
-  if (!(ss->skip || inCheck)) {
-    if ((isPV || cutnode) && depth >= 4 && !hashMove)
-      depth--;
-  }
-
   MovePicker mp;
   if (!isPV && !inCheck) {
-    const int opponentHasEasyCapture = !!OpponentsEasyCaptures(board);
 
     // Reverse Futility Pruning
     // i.e. the static eval is so far above beta we prune
-    if (depth <= 9 && !ss->skip && eval < TB_WIN_BOUND && eval >= beta &&
-        eval - 70 * depth + 118 * (improving && !opponentHasEasyCapture) >= beta &&
-        (!hashMove || GetHistory(ss, thread, hashMove) > 11800))
+    if (depth <= 9 && !ss->skip && eval < TB_WIN_BOUND &&
+        eval - Max(20, 127 * (depth - improving)) >= beta)
       return (eval + beta) / 2;
 
     // Razoring
-    if (depth <= 5 && eval + 214 * depth <= alpha) {
+    if (eval + 413 * depth <= alpha) {
       score = Quiesce(alpha, beta, 0, thread, ss);
       if (score <= alpha)
         return score;
@@ -529,9 +520,10 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
     // i.e. Our position is so good we can give our opponnent a free move and
     // they still can't catch up (this is usually countered by captures or mate
     // threats)
-    if (depth >= 4 && (ss - 1)->move != NULL_MOVE && !ss->skip && !opponentHasEasyCapture && eval >= beta &&
-        HasNonPawn(board, board->stm) && (ss->ply >= thread->nmpMinPly || board->stm != thread->npmColor)) {
-      int R = 4 + 385 * depth / 1024 + Min(10 * (eval - beta) / 1024, 4);
+    if ((ss - 1)->move != NULL_MOVE && !ss->skip && eval >= beta &&
+        HasNonPawn(board, board->stm) && beta > -TB_WIN_SCORE) {
+
+      int R = 4 + depth / 4 + Min((eval - beta) / 172, 4);
 
       TTPrefetch(KeyAfter(board, NULL_MOVE));
       ss->move = NULL_MOVE;
@@ -546,27 +538,15 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
       if (score >= beta) {
         if (score >= TB_WIN_BOUND)
           score = beta;
-
-        if (thread->nmpMinPly || (abs(beta) < TB_WIN_BOUND && depth < 14))
-          return score;
-
-        thread->nmpMinPly = ss->ply + 3 * (depth - R) / 4;
-        thread->npmColor  = board->stm;
-
-        Score verify = Negamax(beta - 1, beta, depth - R, 0, thread, pv, ss);
-
-        thread->nmpMinPly = 0;
-
-        if (verify >= beta)
-          return score;
+        return score;
       }
     }
 
     // Prob cut
     // If a relatively deep search from our TT doesn't say this node is
     // less than beta + margin, then we run a shallow search to look
-    int probBeta = beta + 172;
-    if (depth >= 6 && !ss->skip && abs(beta) < TB_WIN_BOUND && !(ttHit && ttDepth >= depth - 3 && ttScore < probBeta)) {
+    int probBeta = beta + 217;
+    if (depth >= 5 && abs(beta) < TB_WIN_BOUND && !(ttHit && ttDepth >= depth - 3 && ttScore < probBeta)) {
       InitPCMovePicker(&mp, thread, probBeta > eval);
       while ((move = NextMove(&mp, board, 1))) {
         if (!IsLegal(move, board))
@@ -591,6 +571,13 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
           return score;
       }
     }
+  }
+
+  // IIR by Ed Schroder
+  // http://talkchess.com/forum3/viewtopic.php?f=7&t=74769&sid=64085e3396554f0fba414404445b3120
+  if (!inCheck) {
+    if ((isPV || cutnode) && depth >= 2+2*cutnode && !hashMove)
+      depth--;
   }
 
   int numQuiets = 0, numCaptures = 0;

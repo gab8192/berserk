@@ -598,15 +598,14 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
     int extension       = 0;
     int history         = GetHistory(ss, thread, move);
 
-    int R = LMR[Min(depth, 63)][Min(legalMoves, 63)];
-    R += !improving;
-    R += (IsCap(hashMove) || IsPromo(hashMove));
-
     if (bestScore > -TB_WIN_BOUND) {
       if (!isRoot && legalMoves >= (depth * depth + 3) / (2 - improving))
         skipQuiets = 1;
 
       if (!IsCap(move) && PromoPT(move) != QUEEN) {
+        int R = LMR[Min(depth, 63)][Min(legalMoves, 63)];
+        R -= improving;
+        R += (IsCap(hashMove) || IsPromo(hashMove));
         int lmrDepth = Max(0, depth - R);
 
         if (!inCheck && lmrDepth < 10 && ss->staticEval + 179 + 106 * lmrDepth <= alpha)
@@ -681,8 +680,9 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
 
     // Late move reductions
     if (depth > 1 && legalMoves > 1 + 2 * isRoot) {
-      if (IsCap(move))
-        R /= 2;
+      int R = LMR[Min(depth, 63)][Min(legalMoves, 63)] / (1 + IsCap(move));
+      R += !improving;
+      R += (IsCap(hashMove) || IsPromo(hashMove));
 
       // increase reduction on non-pv
       if (ttPv)

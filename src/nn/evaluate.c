@@ -103,7 +103,7 @@ int Propagate(Board* board) {
 
   int unsquared = vecHaddEpi32(sum) / 255 + OUTPUT_BIAS[outputBucket];
 
-  return (unsquared * 300) / 16320;
+  return (unsquared * 400) / 16320;
 }
 
 int Predict(Board* board) {

@@ -58,6 +58,10 @@ ifeq ($(ARCH), native)
 		ifeq ($(findstring __znver1, $(PROPS)),)
 			ifeq ($(findstring __znver2, $(PROPS)),)
 				CFLAGS += -DUSE_PEXT
+			else ifeq ($(shell uname), Linux)
+				ifneq ($(findstring AMD EPYC 7B, $(shell lscpu)),)
+					CFLAGS += -DUSE_PEXT
+				endif
 			endif
 		endif
 	endif

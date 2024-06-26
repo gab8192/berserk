@@ -60,8 +60,8 @@ void InitPruningAndReductionTables() {
     LMP[0][depth] = 1.3050 + 0.3503 * depth * depth;
     LMP[1][depth] = 2.1885 + 0.9911 * depth * depth;
 
-    STATIC_PRUNE[0][depth] = -15.2703 * depth * depth; // quiet move cutoff
-    STATIC_PRUNE[1][depth] = -94.0617 * depth;        // capture cutoff
+    STATIC_PRUNE[0][depth] = -90 * depth; // quiet move cutoff
+    STATIC_PRUNE[1][depth] = -101 * depth;        // capture cutoff
   }
 }
 
@@ -604,8 +604,8 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
 
       if (!IsCap(move) && PromoPT(move) != QUEEN) {
         int R = LMR[Min(depth, 63)][Min(legalMoves, 63)];
-        R -= improving;
-        R += (IsCap(hashMove) || IsPromo(hashMove));
+        R += ! improving;
+        R -= history / 8192;
         int lmrDepth = Max(0, depth - R);
 
         if (!inCheck && lmrDepth < 10 && ss->staticEval + 179 + 106 * lmrDepth <= alpha)
@@ -723,7 +723,7 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
       score = -Negamax(-alpha - 1, -alpha, newDepth, !cutnode, thread, &childPv, ss + 1);
     }
 
-    if (isPV && (playedMoves == 1 || (score > alpha && (isRoot || score < beta))))
+    if (isPV && (playedMoves == 1 || score > alpha))
       score = -Negamax(-beta, -alpha, newDepth, 0, thread, &childPv, ss + 1);
 
     UndoMove(move, board);

@@ -460,6 +460,16 @@ int Negamax(int alpha, int beta, int depth, int cutnode, ThreadData* thread, PV*
     }
   }
 
+  Accumulator* acc = board->accumulators;
+  for (int c = WHITE; c <= BLACK; c++) {
+    if (!acc->correct[c]) {
+      if (CanEfficientlyUpdate(acc, c))
+        ApplyLazyUpdates(acc, board, c);
+      else
+        RefreshAccumulator(acc, board, c);
+    }
+  }
+
   if (inCheck) {
     eval = ss->staticEval = EVAL_UNKNOWN;
   } else {
@@ -828,6 +838,16 @@ int Quiesce(int alpha, int beta, int depth, ThreadData* thread, SearchStack* ss)
   // TT score pruning, ttHit implied with adjusted score
   if (!isPV && ttScore != UNKNOWN && (ttBound & (ttScore >= beta ? BOUND_LOWER : BOUND_UPPER)))
     return ttScore;
+
+  Accumulator* acc = board->accumulators;
+  for (int c = WHITE; c <= BLACK; c++) {
+    if (!acc->correct[c]) {
+      if (CanEfficientlyUpdate(acc, c))
+        ApplyLazyUpdates(acc, board, c);
+      else
+        RefreshAccumulator(acc, board, c);
+    }
+  }
 
   if (inCheck) {
     eval = ss->staticEval = EVAL_UNKNOWN;

@@ -69,12 +69,6 @@ else ifeq ($(findstring -pext, $(ARCH)), -pext)
 	CFLAGS += -DUSE_PEXT -mbmi2
 endif
 
-openbench: download-network
-	$(MAKE) ARCH=avx2 all
-
-build: download-network
-	$(MAKE) ARCH=$(ARCH) all
-
 pgo: download-network
 ifeq ($(findstring gcc, $(CC)), gcc)
 	$(MAKE) ARCH=$(ARCH) PGOFLAGS="-fprofile-generate=pgo" all
@@ -98,6 +92,12 @@ else ifeq ($(findstring clang, $(CC)), clang)
 else
 	@echo "PGO builds not supported for $(CC)"
 endif
+
+openbench: download-network
+	$(MAKE) ARCH=avx2 all
+
+build: download-network
+	$(MAKE) ARCH=$(ARCH) all
 
 all:
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
